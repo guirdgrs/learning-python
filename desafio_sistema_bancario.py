@@ -88,6 +88,39 @@ class Conta:
             self._saldo += valor
             return True
 
+#Iterador de contas
+class ContaIterador:
+    #Como parâmetro recebe contas
+    def __init__(self, contas):
+        self.contas = contas
+
+        #Index é usado para percorrer o array
+        self._index = 0
+    
+    def __iter__(self):
+        pass
+
+    def __next__(self):
+        try:
+            #Pega a conta do index
+            conta = self.contas[self._index]
+
+            #Retorna a conta e os valores
+            return f"""\
+            Agência: {conta.agencia}
+            Número: {conta.numero}
+            Proprietário: {conta.cliente._nome}
+            Saldo: {conta.saldo:.2f}
+            """
+        
+        #Caso o index seja maior que o tamanho do array
+        except IndexError:
+            #Para a iteração
+            raise StopIteration
+        finally:
+            #Incrementa o index
+            self._index += 1
+
 class ContaCorrente(Conta):
     def __init__(self, cliente, numero, limite=500, limite_saques=3):
         super().__init__(cliente, numero)
@@ -124,6 +157,11 @@ class Cliente:
         self._contas = []
 
     def realizar_transacao(self, conta, transacao):
+
+        if len(conta._historico.transacoes_do_dia()) >= 10:
+            print("Limite de transações diarias atingido.")
+            return
+        
         transacao.registrar(conta)
 
     def adicionar_conta(self, conta):
@@ -149,10 +187,36 @@ class Historico:
             {
                 "tipo": transacao.__class__.__name__,
                 "valor": transacao._valor,
-                "data": datetime.now()
+                "data": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         )
 
+    #Gerador de relatórios
+    def gerar_relatorio(self, tipo_transacao = None):
+        
+        #Para cada transação em self._transacoes retorna a transação
+        for transacao in self._transacoes:
+            if tipo_transacao is None or transacao["tipo"].lower() == tipo_transacao.lower():
+               #yield é usado para retornar os valores em um gerador
+                yield transacao
+
+    def transacoes_do_dia(self):
+
+        #Armazena a data atual
+        data_atual = datetime.now().date()
+
+        #Cria uma lista para armazenar as transações
+        transacoes = []
+
+        #Para cada transação em self._transacoes, verifica se a data da transação é igual a data atual
+        for transacao in self._transacoes:
+            data_transacao = datetime.strptime(transacao["data"], "%Y-%m-%d %H:%M:%S").date()
+            
+            if data_atual == data_transacao:
+                transacoes.append(transacao)
+
+        return transacoes
+    
 class Transacao(ABC):
     @property
     @abstractmethod
@@ -190,7 +254,23 @@ class Saque(Transacao):
             conta._historico.adicionar_transacao(self)
             return True
     
+def log_transacao(func):
+
+    def wrapper(*args, **kwargs):
+
+        #resultado armazena o retorno da função
+        resultado = func(*args, **kwargs)
+
+        #Printa a data e o nome da função
+        print(f"\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} : {func.__name__}".upper())
+
+        #Retorna o resultado
+        return resultado
+
+    return wrapper
+
 #Função para realizar o saque
+@log_transacao
 def sacar(clientes):
     cpf = input("Informe o CPF do titular da conta: ")
     usuario = verificar_se_usuario_existe(cpf, clientes)
@@ -210,6 +290,7 @@ def sacar(clientes):
     usuario.realizar_transacao(conta, transacao)
 
 #Função para realizar o depósito
+@log_transacao
 def depositar(clientes):
 
     #Input para informar o CPF
@@ -254,6 +335,7 @@ def recuperar_conta_usuario(cliente):
         return cliente._contas[0]
 
 #Função para mostrar o extrato
+@log_transacao
 def mostrar_extrato(clientes):
 
     cpf = input("Informe o CPF do titular da conta: ")
@@ -268,18 +350,18 @@ def mostrar_extrato(clientes):
         return
     
     print("".center(40, "="))
-    transacoes = conta._historico.transacoes
 
+    #Cria o extrato com base nas transações: Tipo + Valor
     extrato = ""
-    
-    #Verifica se não houve transações
-    if not transacoes:
-        extrato = ("Não foram realizadas movimentações na sua conta.")
-    else:
-        #Percorre as transações
-        for transacao in transacoes:
-            #Cria o extrato com base nas transações: Tipo + Valor
-            extrato += f"\n{transacao['tipo']}: R$ {transacao['valor']:.2f}"
+
+    tem_transacao = False
+
+    for transacao in conta._historico.gerar_relatorio():
+        tem_transacao = True
+        extrato += f"\n{transacao['data']}\n{transacao['tipo']}: R$ {transacao['valor']:.2f}"
+
+    if not tem_transacao:
+        extrato += "\nNenhuma transação realizada."
 
     #Exibe o extrato e o saldo
     print(extrato)
@@ -289,6 +371,7 @@ def mostrar_extrato(clientes):
     return extrato
 
 #Função para cadastrar usuário
+@log_transacao
 def cadastrar_usuario(clientes):
 
     print("\nCadastrar Usuário")
@@ -321,11 +404,12 @@ def listar_contas(contas):
         return
 
     #Mostra todos os usuários
-    for conta in contas:
+    for conta in ContaIterador(contas):
         print("".center(40, "="))
         print(conta)
         
 #Função para criar uma conta corrente
+@log_transacao
 def criar_conta_corrente(clientes, contas):
 
     cpf = input("Informe o CPF do titular da conta: ")
