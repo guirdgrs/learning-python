@@ -187,7 +187,7 @@ class Historico:
             {
                 "tipo": transacao.__class__.__name__,
                 "valor": transacao._valor,
-                "data": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "data": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             }
         )
 
@@ -210,7 +210,7 @@ class Historico:
 
         #Para cada transação em self._transacoes, verifica se a data da transação é igual a data atual
         for transacao in self._transacoes:
-            data_transacao = datetime.strptime(transacao["data"], "%Y-%m-%d %H:%M:%S").date()
+            data_transacao = datetime.strptime(transacao["data"], "%d/%m/%Y %H:%M:%S").date()
             
             if data_atual == data_transacao:
                 transacoes.append(transacao)
