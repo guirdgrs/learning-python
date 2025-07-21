@@ -262,7 +262,7 @@ def log_transacao(func):
         resultado = func(*args, **kwargs)
 
         #Printa a data e o nome da função
-        print(f"\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} : {func.__name__}".upper())
+        print(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M')} : {func.__name__}".upper())
 
         #Retorna o resultado
         return resultado
