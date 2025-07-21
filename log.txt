@@ -1,0 +1,28 @@
+Data:21/07/2025 18:18:28
+Funcao: CADASTRAR_USUARIO
+Argumentos:
+  clientes: [PessoaFisica: a]
+----------------------------------------
+Data:21/07/2025 18:18:30
+Funcao: CRIAR_CONTA_CORRENTE
+Argumentos:
+  clientes: [PessoaFisica: a]
+  contas: [ContaCorrente: '0001', '1', 'b']
+----------------------------------------
+Data:21/07/2025 18:18:32
+Funcao: DEPOSITAR
+Argumentos:
+  clientes: [PessoaFisica: a]
+----------------------------------------
+Data:21/07/2025 18:18:35
+Funcao: SACAR
+Argumentos:
+  clientes: [PessoaFisica: a]
+----------------------------------------
+Data: 21/07/2025 18:26:40
+Funcao: CADASTRAR_USUARIO
+Argumentos: 
+  clientes: [PessoaFisica: b]
+Retorno: None
+----------------------------------------
+

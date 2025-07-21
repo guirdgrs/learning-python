@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 from datetime import datetime
+import inspect
 
 
 print ("Bem-vindo(a) ao sistema bancário!")
@@ -20,7 +22,7 @@ def menu():
 => """
     return input(menu)
 
-class Conta:    
+class Conta:        
 
     # _nome para indicar que o atributo é privado
 
@@ -150,6 +152,9 @@ class ContaCorrente(Conta):
             Número: {self.numero}
             Proprietário: {self.cliente._nome}
         """
+    
+    def __repr__(self):
+        return f"{self.__class__.__name__}: '{self._agencia}', '{self._numero}', '{self._cliente._nome}'"
 
 class Cliente:
     def __init__(self, endereco):
@@ -174,6 +179,9 @@ class PessoaFisica(Cliente):
         self._nome = nome
         self._data_nascimento = data_nascimento
     
+    # __repr__ serve para mostrar o objeto da classe para o log
+    def __repr__(self):
+        return f"{self.__class__.__name__}: {self._cpf}"
 class Historico:
     def __init__(self):
         self._transacoes = []
@@ -260,9 +268,40 @@ def log_transacao(func):
 
         #resultado armazena o retorno da função
         resultado = func(*args, **kwargs)
+        data_atual = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 
-        #Printa a data e o nome da função
-        print(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M')} : {func.__name__}".upper())
+        #sig armazena a assinatura da função
+        sig = inspect.signature(func)
+
+        #bound_args armazena os argumentos
+        bound_args = sig.bind(*args, **kwargs)
+
+        bound_args.apply_defaults() #Aplica os defaults aos argumentos
+
+        #args_formatados armazena os argumentos formatados
+        args_formatados = "\n".join(f"  {k}: {v}" for k, v in bound_args.arguments.items())
+
+        #Armazena o log
+        log = (
+            f"Data: {data_atual}\n"
+            f"Funcao: {func.__name__.upper()}\n"
+            f"Argumentos: \n{args_formatados}\n"
+            f"Retorno: {resultado}\n"
+            f"{'-'*40}\n\n"
+        )
+
+        ROOT_PATH = Path(__file__).parent
+        log_path = ROOT_PATH / "log.txt"
+
+        try:
+            with open(log_path, "a") as file:
+                file.write(log)
+        except FileNotFoundError:
+            print("O arquivo 'log.txt' nao foi encontrado.")
+        except PermissionError:
+            print("Sem permissão para escrever no arquivo 'log.txt'")
+        except Exception as e:
+            print(f"Ocorreu um erro ao escrever no arquivo 'log.txt': {e}")
 
         #Retorna o resultado
         return resultado
