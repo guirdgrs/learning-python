@@ -1,11 +1,10 @@
-from abc import ABC, abstractmethod
-from pathlib import Path
-from datetime import datetime
 import inspect
+from abc import ABC, abstractmethod
+from datetime import datetime
+from pathlib import Path
 
-
-print ("Bem-vindo(a) ao sistema bancário!")
-print ("\nSelecione a operação desejada:")
+print("Bem-vindo(a) ao sistema bancário!")
+print("\nSelecione a operação desejada:")
 
 
 def menu():
@@ -22,38 +21,38 @@ def menu():
 => """
     return input(menu)
 
-class Conta:        
+
+class Conta:
 
     # _nome para indicar que o atributo é privado
 
     def __init__(self, numero, cliente):
-        #Valores padrão
+        # Valores padrão
         self._saldo = 0
         self._numero = numero
         self._agencia = "0001"
 
         self._cliente = cliente
-        #Historico é instanciado na classe Historico
+        # Historico é instanciado na classe Historico
         self._historico = Historico()
 
-
-    #@property é usado para criar um 'getter' que irá retornar os valores
+    # @property é usado para criar um 'getter' que irá retornar os valores
     @property
     def saldo(self):
         return self._saldo
-    
+
     @property
     def numero(self):
         return self._numero
-    
+
     @property
     def agencia(self):
         return self._agencia
-    
+
     @property
     def cliente(self):
         return self._cliente
-    
+
     @property
     def historic(self):
         return self._historico
@@ -61,8 +60,8 @@ class Conta:
     @classmethod
     def nova_conta(cls, numero, cliente):
         return cls(numero, cliente)
-    
-    #Método para sacar
+
+    # Método para sacar
     def sacar(self, valor):
 
         if valor > self.saldo:
@@ -72,56 +71,58 @@ class Conta:
         elif valor < 0:
             print("Operação falhou! O valor informado é inválido.")
             return False
-        
+
         else:
             print("Operação realizada com sucesso!")
             self._saldo -= valor
             return True
 
-    #Método para depositar
+    # Método para depositar
     def depositar(self, valor):
 
         if valor < 0:
             print("Operação falhou! O valor informado é inválido.")
             return False
-        
+
         else:
             print("Operação realizada com sucesso!")
             self._saldo += valor
             return True
 
-#Iterador de contas
+
+# Iterador de contas
 class ContaIterador:
-    #Como parâmetro recebe contas
+    # Como parâmetro recebe contas
     def __init__(self, contas):
         self.contas = contas
 
-        #Index é usado para percorrer o array
+        # Index é usado para percorrer o array
         self._index = 0
-    
+
     def __iter__(self):
         pass
 
     def __next__(self):
         try:
-            #Pega a conta do index
+            # Pega a conta do index
             conta = self.contas[self._index]
 
-            #Retorna a conta e os valores
+            # Retorna a conta e os valores
             return f"""\
             Agência: {conta.agencia}
             Número: {conta.numero}
             Proprietário: {conta.cliente._nome}
             Saldo: {conta.saldo:.2f}
             """
-        
-        #Caso o index seja maior que o tamanho do array
+
+        # Caso o index seja maior que o tamanho do array
         except IndexError:
-            #Para a iteração
+            # Para a iteração
             raise StopIteration
         finally:
-            #Incrementa o index
+            # Incrementa o index
             self._index += 1
+
 
 class ContaCorrente(Conta):
     def __init__(self, cliente, numero, limite=500, limite_saques=3):
@@ -129,22 +130,22 @@ class ContaCorrente(Conta):
         self._limite = limite
         self._limite_saques = limite_saques
 
-        #saques_realizados serve para contar quantos saques foram realizados
+        # saques_realizados serve para contar quantos saques foram realizados
         self.saques_realizados = 0
 
     def sacar(self, valor):
         if self.saques_realizados >= self._limite_saques:
             print("Operação falhou! Limite de saques excedido.")
             return False
-        
+
         elif valor > self._limite:
             print("Operação falhou! O valor do saque é maior que o limite.")
             return False
-        
+
         else:
             self.saques_realizados += 1
             return super().sacar(valor)
-        
+
     # __str__ é usado para mostrar os valores de uma classe
     def __str__(self):
         return f"""\
@@ -152,9 +153,10 @@ class ContaCorrente(Conta):
             Número: {self.numero}
             Proprietário: {self.cliente._nome}
         """
-    
+
     def __repr__(self):
         return f"{self.__class__.__name__}: '{self._agencia}', '{self._numero}', '{self._cliente._nome}'"
+
 
 class Cliente:
     def __init__(self, endereco):
@@ -166,22 +168,25 @@ class Cliente:
         if len(conta._historico.transacoes_do_dia()) >= 10:
             print("Limite de transações diarias atingido.")
             return
-        
+
         transacao.registrar(conta)
 
     def adicionar_conta(self, conta):
         self.contas.append(conta)
-    
+
+
 class PessoaFisica(Cliente):
     def __init__(self, cpf, nome, data_nascimento, endereco):
         super().__init__(endereco)
         self._cpf = cpf
         self._nome = nome
         self._data_nascimento = data_nascimento
-    
+
     # __repr__ serve para mostrar o objeto da classe para o log
     def __repr__(self):
         return f"{self.__class__.__name__}: {self._cpf}"
+
+
 class Historico:
     def __init__(self):
         self._transacoes = []
@@ -195,36 +200,42 @@ class Historico:
             {
                 "tipo": transacao.__class__.__name__,
                 "valor": transacao._valor,
-                "data": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                "data": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             }
         )
 
-    #Gerador de relatórios
-    def gerar_relatorio(self, tipo_transacao = None):
-        
-        #Para cada transação em self._transacoes retorna a transação
+    # Gerador de relatórios
+    def gerar_relatorio(self, tipo_transacao=None):
+
+        # Para cada transação em self._transacoes retorna a transação
         for transacao in self._transacoes:
-            if tipo_transacao is None or transacao["tipo"].lower() == tipo_transacao.lower():
-               #yield é usado para retornar os valores em um gerador
+            if (
+                tipo_transacao is None
+                or transacao["tipo"].lower() == tipo_transacao.lower()
+            ):
+                # yield é usado para retornar os valores em um gerador
                 yield transacao
 
     def transacoes_do_dia(self):
 
-        #Armazena a data atual
+        # Armazena a data atual
         data_atual = datetime.now().date()
 
-        #Cria uma lista para armazenar as transações
+        # Cria uma lista para armazenar as transações
         transacoes = []
 
-        #Para cada transação em self._transacoes, verifica se a data da transação é igual a data atual
+        # Para cada transação em self._transacoes, verifica se a data da transação é igual a data atual
         for transacao in self._transacoes:
-            data_transacao = datetime.strptime(transacao["data"], "%d/%m/%Y %H:%M:%S").date()
-            
+            data_transacao = datetime.strptime(
+                transacao["data"], "%d/%m/%Y %H:%M:%S"
+            ).date()
+
             if data_atual == data_transacao:
                 transacoes.append(transacao)
 
         return transacoes
-    
+
+
 class Transacao(ABC):
     @property
     @abstractmethod
@@ -234,6 +245,7 @@ class Transacao(ABC):
     @abstractmethod
     def registrar(self, conta):
         pass
+
 
 class Deposito(Transacao):
     def __init__(self, valor):
@@ -248,6 +260,7 @@ class Deposito(Transacao):
             conta._historico.adicionar_transacao(self)
             return True
 
+
 class Saque(Transacao):
 
     def __init__(self, valor):
@@ -261,27 +274,30 @@ class Saque(Transacao):
         if conta.sacar(self._valor):
             conta._historico.adicionar_transacao(self)
             return True
-    
+
+
 def log_transacao(func):
 
     def wrapper(*args, **kwargs):
 
-        #resultado armazena o retorno da função
+        # resultado armazena o retorno da função
         resultado = func(*args, **kwargs)
-        data_atual = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        data_atual = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
-        #sig armazena a assinatura da função
+        # sig armazena a assinatura da função
         sig = inspect.signature(func)
 
-        #bound_args armazena os argumentos
+        # bound_args armazena os argumentos
         bound_args = sig.bind(*args, **kwargs)
 
-        bound_args.apply_defaults() #Aplica os defaults aos argumentos
+        bound_args.apply_defaults()  # Aplica os defaults aos argumentos
 
-        #args_formatados armazena os argumentos formatados
-        args_formatados = "\n".join(f"  {k}: {v}" for k, v in bound_args.arguments.items())
+        # args_formatados armazena os argumentos formatados
+        args_formatados = "\n".join(
+            f"  {k}: {v}" for k, v in bound_args.arguments.items()
+        )
 
-        #Armazena o log
+        # Armazena o log
         log = (
             f"Data: {data_atual}\n"
             f"Funcao: {func.__name__.upper()}\n"
@@ -303,21 +319,22 @@ def log_transacao(func):
         except Exception as e:
             print(f"Ocorreu um erro ao escrever no arquivo 'log.txt': {e}")
 
-        #Retorna o resultado
+        # Retorna o resultado
         return resultado
 
     return wrapper
 
-#Função para realizar o saque
+
+# Função para realizar o saque
 @log_transacao
 def sacar(clientes):
     cpf = input("Informe o CPF do titular da conta: ")
     usuario = verificar_se_usuario_existe(cpf, clientes)
-    
+
     if not usuario:
         print("Operação falhou! Cliente nao encontrado.")
         return
-    
+
     valor = float(input("Informe o valor a ser sacado: "))
 
     transacao = Saque(valor)
@@ -328,52 +345,56 @@ def sacar(clientes):
 
     usuario.realizar_transacao(conta, transacao)
 
-#Função para realizar o depósito
+
+# Função para realizar o depósito
 @log_transacao
 def depositar(clientes):
 
-    #Input para informar o CPF
+    # Input para informar o CPF
     cpf = input("Informe o CPF do titular da conta: ")
 
-    #Utilizando um metodo para verificar se o CPF informado existe
+    # Utilizando um metodo para verificar se o CPF informado existe
     usuario = verificar_se_usuario_existe(cpf, clientes)
 
-    #Caso não exista, informa que a operação falhou
+    # Caso não exista, informa que a operação falhou
     if not usuario:
         print("Operação falhou! Cliente não encontrado.")
         return
 
-    #Caso exista o titular da conta, realiza o depósito com base no input
+    # Caso exista o titular da conta, realiza o depósito com base no input
     valor = float(input("Informe o valor a ser depositado: "))
 
-    #Cria uma transação de depósito
+    # Cria uma transação de depósito
     transacao = Deposito(valor)
 
-    #Recupera a primeira conta do titular
+    # Recupera a primeira conta do titular
     conta = recuperar_conta_usuario(usuario)
     if not conta:
         return
 
-    #Realiza a transação
-    usuario.realizar_transacao(conta,transacao)
+    # Realiza a transação
+    usuario.realizar_transacao(conta, transacao)
 
-#Método de verificação de CPF
+
+# Método de verificação de CPF
 def verificar_se_usuario_existe(cpf, clientes):
     for cliente in clientes:
         if cliente._cpf == cpf:
             return cliente
     return None
-        
-#Método de assimilação de conta
+
+
+# Método de assimilação de conta
 def recuperar_conta_usuario(cliente):
     if not cliente._contas:
         print("Operação falhou! Cliente nao possui contas cadastradas.")
         return
     else:
-        #Retorna a primeira conta do cliente
+        # Retorna a primeira conta do cliente
         return cliente._contas[0]
 
-#Função para mostrar o extrato
+
+# Função para mostrar o extrato
 @log_transacao
 def mostrar_extrato(clientes):
 
@@ -387,29 +408,32 @@ def mostrar_extrato(clientes):
     conta = recuperar_conta_usuario(usuario)
     if not conta:
         return
-    
+
     print("".center(40, "="))
 
-    #Cria o extrato com base nas transações: Tipo + Valor
+    # Cria o extrato com base nas transações: Tipo + Valor
     extrato = ""
 
     tem_transacao = False
 
     for transacao in conta._historico.gerar_relatorio():
         tem_transacao = True
-        extrato += f"\n{transacao['data']}\n{transacao['tipo']}: R$ {transacao['valor']:.2f}"
+        extrato += (
+            f"\n{transacao['data']}\n{transacao['tipo']}: R$ {transacao['valor']:.2f}"
+        )
 
     if not tem_transacao:
         extrato += "\nNenhuma transação realizada."
 
-    #Exibe o extrato e o saldo
+    # Exibe o extrato e o saldo
     print(extrato)
     print(f"\nSaldo: R$ {conta.saldo:.2f}")
     print("".center(40, "="))
 
     return extrato
 
-#Função para cadastrar usuário
+
+# Função para cadastrar usuário
 @log_transacao
 def cadastrar_usuario(clientes):
 
@@ -424,7 +448,9 @@ def cadastrar_usuario(clientes):
 
     nome = input("Informe o nome completo: ")
     data_nascimento = input("Informe a data de nascimento (dd-mm-aaaa): ")
-    endereco = input("Informe o endereço (logradouro, nro - bairro - cidade/sigla estado): ")
+    endereco = input(
+        "Informe o endereço (logradouro, nro - bairro - cidade/sigla estado): "
+    )
 
     usuario = PessoaFisica(cpf, nome, data_nascimento, endereco)
 
@@ -433,21 +459,23 @@ def cadastrar_usuario(clientes):
     print("".center(40, "="))
     print("Usuário cadastrado com sucesso!")
     print("".center(40, "="))
-        
-#Função para listar usuários
+
+
+# Função para listar usuários
 def listar_contas(contas):
 
-    #Verifica se algum usuário foi cadastrado
+    # Verifica se algum usuário foi cadastrado
     if not contas:
         print("Usuário não possui contas cadastradas.")
         return
 
-    #Mostra todos os usuários
+    # Mostra todos os usuários
     for conta in ContaIterador(contas):
         print("".center(40, "="))
         print(conta)
-        
-#Função para criar uma conta corrente
+
+
+# Função para criar uma conta corrente
 @log_transacao
 def criar_conta_corrente(clientes, contas):
 
@@ -457,58 +485,59 @@ def criar_conta_corrente(clientes, contas):
     if not usuario:
         print("Operação falhou! Cliente nao encontrado.")
         return
-    
+
     numero_conta = len(contas) + 1
-    #Cria uma nova conta
+    # Cria uma nova conta
     conta = ContaCorrente.nova_conta(numero_conta, usuario)
 
-    #Adiciona a nova conta ao array de contas
+    # Adiciona a nova conta ao array de contas
     contas.append(conta)
 
-    #Adiciona a nova conta ao array de contas do titular
+    # Adiciona a nova conta ao array de contas do titular
     usuario._contas.append(conta)
 
     print("Operação realizada com sucesso!")
 
+
 def main():
-    #Arrays para armazenar os usuários e contas
+    # Arrays para armazenar os usuários e contas
     usuarios = []
     contas = []
-
 
     while True:
 
         opcao = menu()
 
-        #Cadastrar usuário
+        # Cadastrar usuário
         if opcao == "c":
             cadastrar_usuario(usuarios)
 
-        #Listar contas
+        # Listar contas
         elif opcao == "l":
             listar_contas(contas)
 
-        #Criar Conta Corrente
+        # Criar Conta Corrente
         elif opcao == "cc":
             criar_conta_corrente(usuarios, contas)
 
-        #Depósito
+        # Depósito
         elif opcao == "d":
             depositar(usuarios)
 
-        #Saque
+        # Saque
         elif opcao == "s":
             sacar(usuarios)
 
-        #Extrato
+        # Extrato
         elif opcao == "e":
             mostrar_extrato(usuarios)
-        
-        #Sair
-        elif opcao == "q":    
+
+        # Sair
+        elif opcao == "q":
             break
 
         else:
             print("Operação inválida, por favor selecione novamente a opção desejada.")
+
 
 main()
