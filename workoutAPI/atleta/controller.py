@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Body
+from fastapi import APIRouter, status, Body, Path
 from contrib.repository.dependencies import DatabaseDependecy
 from atleta.schemas import AtletaIn, AtletaOut
 from atleta.models import AtletaModel
@@ -6,13 +6,14 @@ from pydantic import UUID4
 from uuid import uuid4
 from datetime import datetime
 from sqlalchemy.future import select
-
+from atleta.schemas import AtletaNomeOut
 from categorias.models import CategoriaModel
 from centro_treinamento.models import CentroTreinamentoModel
 from atleta.schemas import AtletaUpdate
 from fastapi import HTTPException
-
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
+from typing import Annotated 
 
 router = APIRouter()
 
@@ -23,7 +24,7 @@ router = APIRouter()
     response_model=AtletaOut
 )
 
-async def post(
+async def criar_atleta(
     db_session: DatabaseDependecy,
     atleta_in: AtletaIn = Body(...)
 ):
@@ -85,7 +86,7 @@ async def post(
     response_model=list[AtletaOut],
 )
 
-async def query(
+async def consultar_todos_atletas(
     db_session: DatabaseDependecy,
     
  ) -> list[AtletaOut]:
@@ -99,7 +100,7 @@ async def query(
     response_model=AtletaOut,
 )
 
-async def query(
+async def consultar_atleta_pelo_id(
     id: UUID4,
     db_session: DatabaseDependecy,
     
@@ -112,6 +113,31 @@ async def query(
     
     return atleta
 
+@router.get(
+    '/nome/{nome}',
+    response_model=list[AtletaOut],
+    summary='Consultar um atleta pelo nome',
+    status_code=status.HTTP_200_OK
+)
+async def consultar_atleta_pelo_nome(
+
+    nome: Annotated[str, Path(..., min_length=3, example="João Silva")],
+    db_session: DatabaseDependecy,
+
+):
+    
+    stmt = select(AtletaModel).where(AtletaModel.nome.ilike(f"%{nome}%"))
+    result = await db_session.execute(stmt)
+    atletas = result.scalars().all()
+
+    if not atletas:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Atleta(s) não encontrado com o nome: {nome}"
+        )
+    
+    return [AtletaOut.model_validate(atleta) for atleta in atletas]
+
 @router.patch(
     '/{id}', 
     summary='Editar um atleta pelo ID', 
@@ -119,7 +145,7 @@ async def query(
     response_model=AtletaOut,
 )
 
-async def query(
+async def atualizar_atleta(
     id: UUID4,
     db_session: DatabaseDependecy,
     atleta_up: AtletaUpdate = Body(...)
@@ -147,7 +173,7 @@ async def query(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 
-async def query(
+async def deletar_atleta(
     id: UUID4,
     db_session: DatabaseDependecy,
     
