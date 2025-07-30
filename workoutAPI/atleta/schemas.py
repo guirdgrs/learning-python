@@ -3,7 +3,7 @@ from pydantic import Field, PositiveFloat
 from contrib.schemas import BaseSchema, OutMixin
 from categorias.schemas import CategoriaIn
 from centro_treinamento.schemas import CentroTreinamentoAtleta
-from pydantic import UUID4
+from pydantic import BaseModel
 
 class Atleta(BaseSchema):
     nome: Annotated[str, Field(description="Nome do atleta", example="João da Silva", max_length=50)]
@@ -26,7 +26,14 @@ class AtletaUpdate(BaseSchema):
     cpf: Annotated[Optional[str], Field(description="CPF do atleta", example="12345678900", max_length=11)] | None = None
     idade: Annotated[Optional[int], Field(description="Idade do atleta", example=25)] | None = None
 
+
+class CentroTreinamentoOut(BaseModel):
+    nome:str
+
+class CategoriaOut(BaseModel):
+    nome: str
+
 class AtletaResumeOut(BaseSchema):
-    nome: Annotated[str, Field(description="Nome do atleta", example="João da Silva", max_length=50)]
-    centro_treinamento: Annotated[str, Field(description="Centro de treinamento do atleta")]
-    categoria: Annotated[str, Field(description="Categoria do atleta")]
+    nome: str
+    centro_treinamento: CentroTreinamentoOut
+    categoria: CategoriaOut

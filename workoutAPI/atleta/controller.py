@@ -102,19 +102,10 @@ async def consultar_todos_atletas(
         .options(joinedload(AtletaModel.centro_treinamento))
         .options(joinedload(AtletaModel.categoria))
 ) 
-    
+
     page = await paginate(db_session, query)
 
-    items = [
-        AtletaResumeOut(
-            nome=atleta.nome,
-            centro_treinamento=atleta.centro_treinamento.nome,
-            categoria=atleta.categoria.nome,
-        )
-        for atleta in page.items
-        ]
-
-    return Page.create(items, total=page.total, params=page.params)
+    return page
 
 # Consultar atleta por ID utilizando filter by
 @router.get(
