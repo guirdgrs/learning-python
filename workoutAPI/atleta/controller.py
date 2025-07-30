@@ -138,6 +138,29 @@ async def consultar_atleta_pelo_nome(
     
     return [AtletaOut.model_validate(atleta) for atleta in atletas]
 
+@router.get(
+        '/cpf/{cpf}',
+        response_model=AtletaOut,
+        summary='Consultar um atleta pelo CPF',
+        status_code=status.HTTP_200_OK
+)
+async def consultar_atleta_pelo_cpf(
+    db_session: DatabaseDependecy,
+    cpf: str = Path(..., min_length=11, max_length=11, example="12345678900"),
+):
+    
+    stmt = select(AtletaModel).where(AtletaModel.cpf == cpf)
+    result = await db_session.execute(stmt)
+    atleta = result.scalars().first()
+
+    if not atleta:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Atleta não encontrado com o CPF: {cpf}"
+        )
+    
+    return AtletaOut.model_validate(atleta)
+
 @router.patch(
     '/{id}', 
     summary='Editar um atleta pelo ID', 
