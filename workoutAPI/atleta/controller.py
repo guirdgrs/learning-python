@@ -6,7 +6,6 @@ from pydantic import UUID4
 from uuid import uuid4
 from datetime import datetime
 from sqlalchemy.future import select
-from atleta.schemas import AtletaNomeOut
 from categorias.models import CategoriaModel
 from centro_treinamento.models import CentroTreinamentoModel
 from atleta.schemas import AtletaUpdate
@@ -14,16 +13,21 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from typing import Annotated 
+from atleta.schemas import AtletaResumeOut
+from sqlalchemy.exc import IntegrityError
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
+
 
 router = APIRouter()
 
+# Criar um novo atleta com método POST
 @router.post(
     '/', 
     summary='Criar um novo atleta', 
     status_code=status.HTTP_201_CREATED,
     response_model=AtletaOut
 )
-
 async def criar_atleta(
     db_session: DatabaseDependecy,
     atleta_in: AtletaIn = Body(...)
@@ -63,43 +67,62 @@ async def criar_atleta(
         db_session.add(atleta_model)
         await db_session.commit()
 
-        result = await db_session.execute(
+    except IntegrityError as e:
+        await db_session.rollback()
+
+        cpf_duplicado = atleta_in.cpf
+
+        raise HTTPException(
+            status_code=status.HTTP_303_SEE_OTHER,
+            detail=f"Já existe um atleta cadastrado com o CPF: {cpf_duplicado}"
+        )
+    
+    result = await db_session.execute(
             select(AtletaModel)
             .options(joinedload(AtletaModel.categoria))
             .options(joinedload(AtletaModel.centro_treinamento))
             .filter(AtletaModel.id == atleta_model.id)
         )
-        atleta_completo = result.scalars().first()
-
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ocorreu um erro ao inserir os dados no banco"
-        )
+    atleta_completo = result.scalars().first()
 
     return AtletaOut.model_validate(atleta_completo)
 
+# Consultar todos os atletas com métodos GET
 @router.get(
     '/', 
     summary='Consultar todos os atletas', 
     status_code=status.HTTP_200_OK,
-    response_model=list[AtletaOut],
+    response_model=Page[AtletaResumeOut],
 )
-
 async def consultar_todos_atletas(
     db_session: DatabaseDependecy,
+):
+    query = (
+    select(AtletaModel)
+        .options(joinedload(AtletaModel.centro_treinamento))
+        .options(joinedload(AtletaModel.categoria))
+) 
     
- ) -> list[AtletaOut]:
-    atletas: list[AtletaOut] = (await db_session.execute(select(AtletaModel))).scalars().all()
-    return [AtletaOut.model_validate(atleta) for atleta in atletas]
+    page = await paginate(db_session, query)
 
+    items = [
+        AtletaResumeOut(
+            nome=atleta.nome,
+            centro_treinamento=atleta.centro_treinamento.nome,
+            categoria=atleta.categoria.nome,
+        )
+        for atleta in page.items
+        ]
+
+    return Page.create(items, total=page.total, params=page.params)
+
+# Consultar atleta por ID utilizando filter by
 @router.get(
     '/{id}', 
     summary='Consultar um atleta pelo ID', 
     status_code=status.HTTP_200_OK,
     response_model=AtletaOut,
 )
-
 async def consultar_atleta_pelo_id(
     id: UUID4,
     db_session: DatabaseDependecy,
@@ -113,6 +136,7 @@ async def consultar_atleta_pelo_id(
     
     return atleta
 
+# Consultar atleta pelo nome utilizando ilike
 @router.get(
     '/nome/{nome}',
     response_model=list[AtletaOut],
@@ -138,6 +162,7 @@ async def consultar_atleta_pelo_nome(
     
     return [AtletaOut.model_validate(atleta) for atleta in atletas]
 
+# Consultar atleta pelo CPF utilizando filter by
 @router.get(
         '/cpf/{cpf}',
         response_model=AtletaOut,
@@ -161,13 +186,13 @@ async def consultar_atleta_pelo_cpf(
     
     return AtletaOut.model_validate(atleta)
 
+# Atualizar atleta pelo ID utilizando PATCH
 @router.patch(
     '/{id}', 
     summary='Editar um atleta pelo ID', 
     status_code=status.HTTP_200_OK,
     response_model=AtletaOut,
 )
-
 async def atualizar_atleta(
     id: UUID4,
     db_session: DatabaseDependecy,
@@ -190,12 +215,12 @@ async def atualizar_atleta(
 
     return atleta
 
+# Deletar atleta pelo ID utilizando DELETE
 @router.delete(
     '/{id}', 
     summary='Deletar um atleta pelo ID', 
     status_code=status.HTTP_204_NO_CONTENT,
 )
-
 async def deletar_atleta(
     id: UUID4,
     db_session: DatabaseDependecy,

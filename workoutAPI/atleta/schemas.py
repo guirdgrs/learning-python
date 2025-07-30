@@ -26,15 +26,7 @@ class AtletaUpdate(BaseSchema):
     cpf: Annotated[Optional[str], Field(description="CPF do atleta", example="12345678900", max_length=11)] | None = None
     idade: Annotated[Optional[int], Field(description="Idade do atleta", example=25)] | None = None
 
-class AtletaNomeOut(BaseSchema, OutMixin):
-    nome: Annotated[str, Field(description="Nome do atleta", example="João Silva", max_length=50)]
-    id: Annotated[UUID4, Field(description="ID único do atleta")]
-    
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
-            "example": {
-                "id": "550e8400-e29b-41d4-a716-446655440000",
-                "nome": "João Silva"
-            }
-        }
+class AtletaResumeOut(BaseSchema):
+    nome: Annotated[str, Field(description="Nome do atleta", example="João da Silva", max_length=50)]
+    centro_treinamento: Annotated[str, Field(description="Centro de treinamento do atleta")]
+    categoria: Annotated[str, Field(description="Categoria do atleta")]
