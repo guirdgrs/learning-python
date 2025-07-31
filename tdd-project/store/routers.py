@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from store.controllers.product import router as product_router
 
-router = APIRouter()
+api_router = APIRouter()
 
-router.include_router(product_router, prefix="/products")
+api_router.include_router(product_router, prefix="/products")

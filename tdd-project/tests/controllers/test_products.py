@@ -24,7 +24,7 @@ async def test_controller_create_should_return_success(client, products_url):
 async def test_controller_get_should_return_success(
     client, products_url, product_inserted
 ):
-    response = await client.post(
+    response = await client.get(
         f"{products_url}{product_inserted.id}",
     )
 
@@ -43,7 +43,7 @@ async def test_controller_get_should_return_success(
 
 
 async def test_controller_get_should_return_not_found(client, products_url):
-    response = await client.post(
+    response = await client.get(
         f"{products_url}4f4f4f4f-4f4f-4f4f-4f4f-4f4f4f4f4f4f",
     )
 
@@ -55,7 +55,7 @@ async def test_controller_get_should_return_not_found(client, products_url):
 async def test_controller_query_should_return_success(client, products_url):
     response = await client.get(products_url)
 
-    response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_200_OK
     assert isinstance(response.json(), List)
     assert len(response.json()) > 1
 
@@ -63,7 +63,7 @@ async def test_controller_query_should_return_success(client, products_url):
 async def test_controller_patch_should_return_success(
     client, products_url, product_inserted
 ):
-    response = await client.update(
+    response = await client.patch(
         f"{products_url}{product_inserted.id}", json={"price": "7.500"}
     )
 

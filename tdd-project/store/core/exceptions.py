@@ -1,5 +1,5 @@
 class BaseException(Exception):
-    message: str = "Internal server error"
+    message: str = "Internal Server Error"
 
     def __init__(self, message: str | None = None) -> None:
         if message:
@@ -7,4 +7,4 @@ class BaseException(Exception):
 
 
 class NotFoundException(BaseException):
-    message: str = "Not found"
+    message = "Not found"
